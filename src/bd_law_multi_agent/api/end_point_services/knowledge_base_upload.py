@@ -22,12 +22,13 @@ async def process_document(
         # Extract text using OCR
         text = ocr_extractor.extract_text_from_file(file_path)
         
-        # Add to vector database
+        # Add to vector database - duplicates will be handled within the add_document method
         vector_db.add_document(
             text=text,
             document_id=document_id,
             source_type=source_type,
-            source_path=source_path
+            source_path=source_path,
+            description=description
         )
         
         # Clean up temporary file
@@ -36,6 +37,9 @@ async def process_document(
             
     except Exception as e:
         print(f"Error processing document: {str(e)}")
+        # Clean up if error occurs
+        if os.path.exists(file_path):
+            os.remove(file_path)
 
 async def process_url(
     url: str,
@@ -48,12 +52,13 @@ async def process_url(
         # Extract text using OCR
         text = ocr_extractor.extract_text_from_url(url)
         
-        # Add to vector database
+        # Add to vector database - duplicates will be handled within the add_document method
         vector_db.add_document(
             text=text,
             document_id=document_id,
             source_type=source_type,
-            source_path=url
+            source_path=url,
+            description=description
         )
         
     except Exception as e:

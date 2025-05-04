@@ -8,28 +8,39 @@ class UrlRequest(BaseModel):
     description: Optional[str] = None
 
 class SearchQuery(BaseModel):
-    """Schema for search query"""
-    query_text: str = Field(..., description="The search query text")
+    """
+    Schema for search query requests
+    """
+    query_text: str = Field(..., description="Text to search for")
     limit: Optional[int] = Field(5, description="Maximum number of results to return")
 
-class DocumentMetadata(BaseModel):
-    """Schema for document metadata"""
+
+class DocumentResult(BaseModel):
+    """
+    Schema for search result document
+    """
     document_id: str
     source_type: str
     source_path: str
-    score: Optional[float] = None
-    text_preview: Optional[str] = None
+    score: float
+    text_preview: str
     description: Optional[str] = None
 
-class DocumentResponse(BaseModel):
-    """Schema for document response"""
-    document_id: str
-    source_type: str
-    source_path: str
-    description: Optional[str] = None
-    text_preview: Optional[str] = None
 
 class SearchResult(BaseModel):
-    """Schema for search results"""
+    """
+    Schema for search response
+    """
     query: str
-    results: List[DocumentMetadata]
+    results: List[DocumentResult]
+
+
+class DocumentResponse(BaseModel):
+    """
+    Schema for document upload response
+    """
+    document_id: str
+    source_type: str
+    source_path: str
+    text_preview: str
+    description: Optional[str] = None
