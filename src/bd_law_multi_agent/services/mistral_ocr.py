@@ -26,9 +26,7 @@ class MistralOCRTextExtractor:
         Args:
             api_key: Mistral API key. If None, tries to get from environment variable.
         """
-        self.api_key = api_key or os.environ.get("MISTRAL_API_KEY")
-        if not self.api_key:
-            raise ValueError("No Mistral API key provided. Set the MISTRAL_API_KEY environment variable or pass the key directly.")
+        self.api_key = config.MISTRAL_API_KEY
         self.client = Mistral(api_key=self.api_key)
     
     def upload_pdf(self, content: bytes, filename: str) -> str:
@@ -150,14 +148,14 @@ class MistralOCRTextExtractor:
 
 
 # if __name__ == "__main__":
-#     # Example usage
+# #     # Example usage
 #     extractor = MistralOCRTextExtractor()
     
-#     # Extract text from a URL
+# #     # Extract text from a URL
 #     text = extractor.extract_text_from_url("https://arxiv.org/pdf/2501.12948")
 #     print(f"Extracted {len(text.split())} words")
 #     print(text[:500] + "...")  # Print first 500 characters
     
-#     # Extract text from a local file
-#     # text = extractor.extract_text_from_file("document.pdf")
-#     # print(f"Extracted {len(text.split())} words")
+# #     # Extract text from a local file
+# #     # text = extractor.extract_text_from_file("document.pdf")
+# #     # print(f"Extracted {len(text.split())} words")

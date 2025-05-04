@@ -1,7 +1,10 @@
-from pydantic import BaseSettings, Field
+from pydantic_settings import BaseSettings
+from pydantic import Field
 from typing import List
+from dotenv import load_dotenv
 import os
 
+load_dotenv()
 
 class Config(BaseSettings):
     """
@@ -9,16 +12,20 @@ class Config(BaseSettings):
     Uses Pydantic for type validation and environment variable loading.
     """
     
+    model_config = {
+        "env_file": ".env",
+        "env_file_encoding": "utf-8",
+        "case_sensitive": True,
+        "extra": "allow",  
+    }
+    
     # ================================= Tex Extractor Config with Mistral ================================
     Mistral_LLM_MODEL: str = Field(default="mistral-ocr-latest", description="mistral LLM model name")
-    
+    MISTRAL_API_KEY: str = Field(default_factory=lambda: os.getenv("MISTRAL_API_KEY", ""), description="Mistral API key")
     
     
     # =========================================== Database Settings =========================================
-
-    
-    
-    
+    # Add your database configuration here if needed
     
     
     # ================================= ANALYSIS AND ARGUEMENT GENERATION CONFIGURATION ================================
@@ -98,12 +105,5 @@ class Config(BaseSettings):
         default="data/analysis_vector_db", 
         description="Path to vector database for analysis storage"
     )
-    
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        case_sensitive = True
-
-
 
 config = Config()
