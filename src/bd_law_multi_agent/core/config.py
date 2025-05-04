@@ -25,12 +25,14 @@ class Config(BaseSettings):
     
     
     # =========================================== Database Settings =========================================
-    # Add your database configuration here if needed
+    VECTOR_DB_PATH: str = Field(
+        default="data/vector_db")
     
     
     # ================================= ANALYSIS AND ARGUEMENT GENERATION CONFIGURATION ================================
     EMBEDDING_MODEL: str = Field(default="text-embedding-3-large", description="Model used for text embeddings")
-    LLM_MODEL: str = Field(default="gpt-4-1106-preview", description="Large language model for text generation")
+    LLM_MODEL: str = Field(default="gpt-4.1-2025-04-14", description="Large language model for text generation")
+    OPENAI_API_BASE_URL: str = Field(default_factory=lambda: os.getenv("OPENAI_API_KEY", ""), description="Open API key")
     
     # Text Splitting Configuration
     CHUNK_SIZE: int = Field(default=1000, description="Size of text chunks for processing")
