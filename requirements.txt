@@ -1,0 +1,22 @@
+fastapi
+uvicorn
+python-dotenv
+langchain
+langchain-openai
+langchain-community
+faiss-cpu
+pydantic
+PyPDF2
+langgraph
+pdf2image
+pytesseract
+python-multipart
+spacy
+chromadb
+streamlit
+google-generativeai
+alembic
+psycopg2-binary
+pypdf
+langchain-mcp-adapters
+-e .
