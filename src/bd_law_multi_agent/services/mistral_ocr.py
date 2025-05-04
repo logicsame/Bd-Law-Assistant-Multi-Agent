@@ -5,10 +5,8 @@ from mistralai import Mistral
 from PIL import Image
 from pathlib import Path
 from typing import Dict, Optional, Any
-from dotenv import load_dotenv
 from bd_law_multi_agent.core.config import config
 
-load_dotenv()
 
 class MistralOCRTextExtractor:
     """
@@ -147,14 +145,14 @@ class MistralOCRTextExtractor:
         return text.strip()
 
 
-# if __name__ == "__main__":
-# #     # Example usage
-#     extractor = MistralOCRTextExtractor()
+if __name__ == "__main__":
+#     # Example usage
+    extractor = MistralOCRTextExtractor()
     
-# #     # Extract text from a URL
-#     text = extractor.extract_text_from_url("https://arxiv.org/pdf/2501.12948")
-#     print(f"Extracted {len(text.split())} words")
-#     print(text[:500] + "...")  # Print first 500 characters
+#     # Extract text from a URL
+    text = extractor.extract_text_from_url("https://arxiv.org/pdf/2501.12948")
+    print(f"Extracted {len(text.split())} words")
+    print(text[:500] + "...")  # Print first 500 characters
     
 # #     # Extract text from a local file
 # #     # text = extractor.extract_text_from_file("document.pdf")
