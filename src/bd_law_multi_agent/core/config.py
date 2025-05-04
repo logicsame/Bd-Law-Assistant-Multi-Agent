@@ -28,7 +28,16 @@ class Config(BaseSettings):
     VECTOR_DB_PATH: str = Field(
         default="data/vector_db")
     
+     # Security settings
+    SECRET_KEY: str = Field(default=os.environ.get("SECRET_KEY", "your-secret-key-change-in-production"))
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    PROJECT_NAME: str = Field(default=os.environ.get("PROJECT_NAME", "Legal Analysis System"))
+    # Database settings
+    DATABASE_URL: str = Field(default=os.environ.get("DATABASE_URL", "sqlite:///./app.db"))
     
+    DATABASE_PATH: str = Field(default=os.environ.get("DATABASE_PATH", "data/database.db"))
+    API_V1_STR: str = Field(default=os.environ.get("API_V1_STR", "/api/v1"))
     # ================================= ANALYSIS AND ARGUEMENT GENERATION CONFIGURATION ================================
     EMBEDDING_MODEL: str = Field(default="text-embedding-3-large", description="Model used for text embeddings")
     LLM_MODEL: str = Field(default="gpt-4.1-2025-04-14", description="Large language model for text generation")

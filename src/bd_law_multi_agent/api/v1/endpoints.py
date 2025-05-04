@@ -2,16 +2,21 @@ import os
 import tempfile 
 import uuid
 from typing import Optional
-from fastapi import FastAPI, File, UploadFile, Form, HTTPException, BackgroundTasks
+from fastapi import APIRouter, File, UploadFile, Form, HTTPException, BackgroundTasks, Depends
 import aiofiles
+from sqlalchemy.orm import Session
+
 from bd_law_multi_agent.utils.common import get_file_type, get_url_type
-from bd_law_multi_agent.schemas.schemas import SearchQuery, DocumentResponse, SearchResult
+from bd_law_multi_agent.schemas.schemas import DocumentResponse, SearchQuery, SearchResult
+from bd_law_multi_agent.schemas.schemas import User
 from bd_law_multi_agent.services.mistral_ocr import MistralOCRTextExtractor
 from bd_law_multi_agent.services.vector_store import DocumentVectorDatabase
 from bd_law_multi_agent.core.config import config
+from bd_law_multi_agent.database.database import get_db
+from bd_law_multi_agent.core.security import get_current_active_user
 from bd_law_multi_agent.api.end_point_services.knowledge_base_upload import process_document, process_url
 
-app = FastAPI(title="Bd Law Multi Agent API", version="1.0.0")
+app = APIRouter(tags=["documents"])
 
 ocr_extractor = MistralOCRTextExtractor()
 
@@ -25,7 +30,9 @@ async def upload_document(
     background_tasks: BackgroundTasks,
     file: Optional[UploadFile] = File(None),
     url: Optional[str] = Form(None),
-    description: Optional[str] = Form(None)
+    description: Optional[str] = Form(None),
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
 ):
     """Upload a document (PDF or image) or process a URL"""
     try:
@@ -107,6 +114,28 @@ async def upload_document(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
+
+
+@app.post("/search", response_model=list[SearchResult])
+async def search_documents(
+    query: SearchQuery,
+    current_user: User = Depends(get_current_active_user)
+):
+    """Search documents in vector store"""
+    results = vector_db.search(query.query, query.top_k if query.top_k else None)
+    return results
+
+
+@app.delete("/documents/{document_id}")
+async def delete_document(
+    document_id: str,
+    current_user: User = Depends(get_current_active_user)
+):
+    """Delete a document from vector store"""
+    success = vector_db.delete_document(document_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Document not found")
+    return {"status": "success", "message": f"Document {document_id} deleted successfully"}
 
 # Health check endpoint
 @app.get("/health")
