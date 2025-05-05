@@ -1,6 +1,7 @@
 # bd_law_multi_agent/schemas/schemas.py
-from pydantic import BaseModel, Field, HttpUrl,EmailStr
-from typing import List, Optional
+from pydantic import BaseModel, Field, HttpUrl,EmailStr, conlist
+from typing import List, Optional, Dict, Any
+from datetime import datetime
 
 class UrlRequest(BaseModel):
     """Schema for URL request"""
@@ -35,15 +36,8 @@ class SearchResult(BaseModel):
     results: List[DocumentResult]
 
 
-class DocumentResponse(BaseModel):
-    """
-    Schema for document upload response
-    """
-    document_id: str
-    source_type: str
-    source_path: str
-    text_preview: str
-    description: Optional[str] = None
+
+
     
     
 class UserBase(BaseModel):
@@ -73,15 +67,28 @@ class UserInDB(UserBase):
     }
 
 
-class User(UserBase):
-    """User model for API responses"""
+class User(BaseModel):
     id: str
+    email: str
+    full_name: Optional[str] = None
+    is_active: bool
 
-    model_config = {
-        "from_attributes": True
-    }
+    class Config:
+        orm_mode = True
+        from_attributes = True
 
+class DocumentResponse(BaseModel):
+    id: str  # Changed from document_id to match model
+    source_type: str
+    source_path: str
+    description: Optional[str] = None
+    text_preview: str
+    created_at: datetime
+    owner: User
 
+    class Config:
+        from_attributes = True  # For Pydantic v2 (orm_mode renamed)
+        populate_by_name = True  # Allow alias population
 class Token(BaseModel):
     """Token response model"""
     access_token: str
@@ -92,3 +99,22 @@ class TokenPayload(BaseModel):
     """Token payload model"""
     sub: Optional[str] = None
     exp: Optional[int] = None
+    
+    
+class DocumentBase(BaseModel):
+    document_id: str
+    source_type: str
+    source_path: str
+    description: Optional[str] = None
+    created_at: datetime
+
+class DocumentChunkBase(BaseModel):
+    chunk_index: int
+    content: str
+    chunk_metadata: Dict[str, Any] 
+
+
+class DocumentCreate(BaseModel):
+    source_type: str
+    source_path: str
+    description: Optional[str] = None

@@ -41,6 +41,7 @@ class Config(BaseSettings):
     # ================================= ANALYSIS AND ARGUEMENT GENERATION CONFIGURATION ================================
     EMBEDDING_MODEL: str = Field(default="text-embedding-3-large", description="Model used for text embeddings")
     LLM_MODEL: str = Field(default="gpt-4.1-2025-04-14", description="Large language model for text generation")
+    GROQ_EMBEDDING_MODEL: str = Field(default="gpt-4.1-2025-04-14", description="llama3-70b-8192-embed")
     OPENAI_API_BASE_URL: str = Field(default_factory=lambda: os.getenv("OPENAI_API_KEY", ""), description="Open API key")
     
     # Text Splitting Configuration
@@ -94,7 +95,10 @@ class Config(BaseSettings):
     # API Keys with environment variable fallback
     OPENAI_API_KEY: str = Field(default_factory=lambda: os.getenv("OPENAI_API_KEY", ""), description="OpenAI API key")
     SERPER_API_KEY: str = Field(default_factory=lambda: os.getenv("SERPER_API_KEY", ""), description="Serper API key")
-    
+    HUGGINGFACE_API_KEY: str = Field(
+        default_factory=lambda: os.getenv("HUGGINGFACE_API_KEY", ""), description="Hugging Face API key"
+    )
+    GROQ_API_KEY: str = Field(default_factory=lambda: os.getenv("GROQ_API_KEY", ""), description="Groq API key")
     LEGAL_DOMAINS: List[str] = Field(
         default=[
             "bdlaws.minlaw.gov.bd",

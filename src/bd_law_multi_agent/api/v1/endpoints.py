@@ -5,6 +5,8 @@ from typing import Optional
 from fastapi import APIRouter, File, UploadFile, Form, HTTPException, BackgroundTasks, Depends
 import aiofiles
 from sqlalchemy.orm import Session
+from datetime import datetime
+from sqlalchemy.orm import joinedload
 
 from bd_law_multi_agent.utils.common import get_file_type, get_url_type
 from bd_law_multi_agent.schemas.schemas import DocumentResponse, SearchQuery, SearchResult
@@ -15,6 +17,7 @@ from bd_law_multi_agent.core.config import config
 from bd_law_multi_agent.database.database import get_db
 from bd_law_multi_agent.core.security import get_current_active_user
 from bd_law_multi_agent.api.end_point_services.knowledge_base_upload import process_document, process_url
+from bd_law_multi_agent.models.document_model import Document, DocumentChunk
 
 app = APIRouter(tags=["documents"])
 
@@ -40,79 +43,87 @@ async def upload_document(
             raise HTTPException(status_code=400, detail="Either file or URL must be provided")
         
         document_id = str(uuid.uuid4())
-        
+        source_type = None
+        file_path = None
+
+        # Create base document record
+        document = Document(
+            id=document_id,
+            user_id=current_user.id,
+            description=description,
+            created_at=datetime.utcnow(),
+            text_preview="Processing..."  # Default preview text
+        )
+
         if file:
             try:
                 source_type = get_file_type(file.filename)
-            except ValueError as e:
-                raise HTTPException(status_code=400, detail=str(e))
-            
-            temp_dir = tempfile.gettempdir()
-            file_path = os.path.join(temp_dir, f"{document_id}_{file.filename}")
-            
-            try:
+                document.source_type = source_type
+                document.source_path = file.filename
+                
+                # Save temporary file
+                temp_dir = tempfile.gettempdir()
+                file_path = os.path.join(temp_dir, f"{document_id}_{file.filename}")
                 async with aiofiles.open(file_path, 'wb') as out_file:
                     content = await file.read()
                     await out_file.write(content)
-            except Exception as e:
-                raise HTTPException(status_code=500, detail=f"File write error: {str(e)}")
-            
-            try:
+                
+                # Extract preview text
                 preview_text = ocr_extractor.extract_text_from_file(file_path)
-                text_preview = preview_text[:200] + "..." if len(preview_text) > 200 else preview_text
+                document.text_preview = preview_text[:200] + "..." if len(preview_text) > 200 else preview_text
+
             except Exception as e:
-                if os.path.exists(file_path):
+                if file_path and os.path.exists(file_path):
                     os.remove(file_path)
-                raise HTTPException(status_code=422, detail=f"OCR extraction failed: {str(e)}")
-            
+                raise HTTPException(status_code=422, detail=f"File processing failed: {str(e)}")
+
+        else:  # URL processing
+            try:
+                source_type = get_url_type(url)
+                document.source_type = source_type
+                document.source_path = url
+                
+                # Extract preview text
+                preview_text = ocr_extractor.extract_text_from_url(url)
+                document.text_preview = preview_text[:200] + "..." if len(preview_text) > 200 else preview_text
+
+            except Exception as e:
+                raise HTTPException(status_code=422, detail=f"URL processing failed: {str(e)}")
+
+        # Commit base document
+        db.add(document)
+        db.commit()
+        db.refresh(document)
+
+        # Add background processing
+        if file:
             background_tasks.add_task(
                 process_document,
                 file_path=file_path,
-                source_type=source_type,
-                source_path=file.filename,
                 document_id=document_id,
+                user_id=current_user.id,
                 description=description
             )
-            
-            return {
-                "document_id": document_id,
-                "source_type": source_type,
-                "source_path": file.filename,
-                "description": description,
-                "text_preview": text_preview
-            }
-            
         else:
-            try:
-                source_type = get_url_type(url)
-            except ValueError as e:
-                raise HTTPException(status_code=400, detail=str(e))
-            
-            try:
-                preview_text = ocr_extractor.extract_text_from_url(url)
-                text_preview = preview_text[:200] + "..." if len(preview_text) > 200 else preview_text
-            except Exception as e:
-                raise HTTPException(status_code=422, detail=f"URL content extraction failed: {str(e)}")
-            
-            background_tasks.add_task(
+                background_tasks.add_task(
                 process_url,
                 url=url,
-                source_type=source_type,
+                source_type=source_type,  
                 document_id=document_id,
+                user_id=current_user.id,
                 description=description
             )
-            
-            return {
-                "document_id": document_id,
-                "source_type": source_type,
-                "source_path": url,
-                "description": description,
-                "text_preview": text_preview
-            }
-            
+
+        # Return document with owner info
+        return db.query(Document)\
+            .options(joinedload(Document.owner))\
+            .filter(Document.id == document_id)\
+            .first()
+
     except HTTPException:
         raise
     except Exception as e:
+        db.rollback()
         raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
 
 
@@ -129,13 +140,44 @@ async def search_documents(
 @app.delete("/documents/{document_id}")
 async def delete_document(
     document_id: str,
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
 ):
-    """Delete a document from vector store"""
+    """Delete a document from both stores"""
+    # Delete from SQLite
+    db_document = db.query(Document).filter(Document.id == document_id).first()
+    if not db_document:
+        raise HTTPException(status_code=404, detail="Document not found")
+    
+    db.delete(db_document)
+    db.commit()
+    
+    # Delete from vector store
     success = vector_db.delete_document(document_id)
     if not success:
+        raise HTTPException(status_code=500, detail="Failed to delete from vector store")
+    
+    return {"status": "success", "message": f"Document {document_id} deleted"}
+
+
+@app.get("/documents/{document_id}", response_model=DocumentResponse)
+async def get_document(
+    document_id: str,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """Get document with all chunks"""
+    document = db.query(Document).filter(Document.id == document_id).first()
+    if not document:
         raise HTTPException(status_code=404, detail="Document not found")
-    return {"status": "success", "message": f"Document {document_id} deleted successfully"}
+    
+    chunks = db.query(DocumentChunk).filter(DocumentChunk.document_id == document_id).all()
+    
+    return {
+        **document.__dict__,
+        "chunks": chunks,
+        "owner": document.owner
+    }
 
 # Health check endpoint
 @app.get("/health")
