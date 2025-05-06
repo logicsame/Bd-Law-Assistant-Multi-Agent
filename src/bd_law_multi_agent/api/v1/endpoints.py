@@ -16,7 +16,7 @@ from bd_law_multi_agent.services.vector_store import DocumentVectorDatabase
 from bd_law_multi_agent.core.config import config
 from bd_law_multi_agent.database.database import get_db
 from bd_law_multi_agent.core.security import get_current_active_user
-from bd_law_multi_agent.api.end_point_services.knowledge_base_upload import process_document, process_url
+from bd_law_multi_agent.api.background_task.knowledge_base_upload import process_document, process_url
 from bd_law_multi_agent.models.document_model import Document, DocumentChunk
 
 app = APIRouter(tags=["documents"])

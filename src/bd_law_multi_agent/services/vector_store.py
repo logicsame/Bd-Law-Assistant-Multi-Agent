@@ -192,6 +192,8 @@
 
 import os
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'TRUE'
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning, module="pydantic._internal._config")
 
 import os
 from datetime import datetime
@@ -366,33 +368,6 @@ class DocumentVectorDatabase:
         """Save the vector store to disk."""
         if self.vector_store:
             self.vector_store.save_local(self.persist_directory)
-    
-    def search(self, query: str, top_k: int = None) -> List[Dict[str, Any]]:
-        """
-        Search for similar documents in the vector store.
-        
-        Args:
-            query: Search query
-            top_k: Number of results to return (uses config if None)
-            
-        Returns:
-            List of search results with document and score
-        """
-        if not self.vector_store:
-            return []
-        
-        k = top_k or config.MAX_RETRIEVED_DOCS
-        docs_with_scores = self.vector_store.similarity_search_with_score(query, k=k)
-        
-        results = []
-        for doc, score in docs_with_scores:
-            results.append({
-                "content": doc.page_content,
-                "metadata": doc.metadata,
-                "score": float(score)
-            })
-        
-        return results
     
     def get_document_by_id(self, document_id: str) -> List[Document]:
         """

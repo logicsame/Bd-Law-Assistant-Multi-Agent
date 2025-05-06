@@ -1,4 +1,4 @@
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field
 from typing import List
 from dotenv import load_dotenv
@@ -12,12 +12,12 @@ class Config(BaseSettings):
     Uses Pydantic for type validation and environment variable loading.
     """
     
-    model_config = {
-        "env_file": ".env",
-        "env_file_encoding": "utf-8",
-        "case_sensitive": True,
-        "extra": "allow",  
-    }
+    model_config = SettingsConfigDict(
+        env_file=".env-",
+        env_file_encoding="utf-8",
+        case_sensitive=True,
+        extra="allow"
+    )
     
     # ================================= Tex Extractor Config with Mistral ================================
     Mistral_LLM_MODEL: str = Field(default="mistral-ocr-latest", description="mistral LLM model name")
@@ -34,14 +34,21 @@ class Config(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     PROJECT_NAME: str = Field(default=os.environ.get("PROJECT_NAME", "Legal Analysis System"))
     # Database settings
-    DATABASE_URL: str = Field(default=os.environ.get("DATABASE_URL", "sqlite:///./app.db"))
-    
-    DATABASE_PATH: str = Field(default=os.environ.get("DATABASE_PATH", "data/database.db"))
+    DATABASE_PATH: str = Field(
+            default=os.path.join("data", "database", "database.db"),
+            description="Path to SQLite database file"
+            )
+
+    DATABASE_URL: str = Field(
+            default=f"sqlite:///{os.path.join('data', 'database', 'database.db')}",
+            description="SQLAlchemy database URL"
+        )
     API_V1_STR: str = Field(default=os.environ.get("API_V1_STR", "/api/v1"))
     # ================================= ANALYSIS AND ARGUEMENT GENERATION CONFIGURATION ================================
     EMBEDDING_MODEL: str = Field(default="text-embedding-3-large", description="Model used for text embeddings")
+    TEMP_EMBEDDING_MODEL: str = Field(default="dwzhu/e5-base-4k", description="Temporary model for text embeddings")
     LLM_MODEL: str = Field(default="gpt-4.1-2025-04-14", description="Large language model for text generation")
-    GROQ_EMBEDDING_MODEL: str = Field(default="gpt-4.1-2025-04-14", description="llama3-70b-8192-embed")
+    GROQ_LLM_MODEL: str = Field(default="meta-llama/llama-4-maverick-17b-128e-instruct", description="Groq model for text generation")
     OPENAI_API_BASE_URL: str = Field(default_factory=lambda: os.getenv("OPENAI_API_KEY", ""), description="Open API key")
     
     # Text Splitting Configuration
@@ -91,7 +98,7 @@ class Config(BaseSettings):
         default="data/vector_db", 
         description="Path to vector database for knowledge storage"
     )
-    
+    DISABLE_GROQ_PROXIES: bool = True
     # API Keys with environment variable fallback
     OPENAI_API_KEY: str = Field(default_factory=lambda: os.getenv("OPENAI_API_KEY", ""), description="OpenAI API key")
     SERPER_API_KEY: str = Field(default_factory=lambda: os.getenv("SERPER_API_KEY", ""), description="Serper API key")

@@ -74,7 +74,7 @@ class User(BaseModel):
     is_active: bool
 
     class Config:
-        orm_mode = True
+        # orm_mode = True
         from_attributes = True
 
 class DocumentResponse(BaseModel):
@@ -118,3 +118,16 @@ class DocumentCreate(BaseModel):
     source_type: str
     source_path: str
     description: Optional[str] = None
+    
+    
+
+
+class CaseClassification(BaseModel):
+    primary_category: str = "Civil Dispute"
+    secondary_category: str = ""
+    complexity_level: str = "Low Complexity"
+    legal_domains: List[str] = Field(default_factory=list)
+    risk_assessment: str = ""          # ← empty string default
+    initial_strategy: str = ""         # ← empty string default
+    key_considerations: List[str] = Field(default_factory=list)
+
