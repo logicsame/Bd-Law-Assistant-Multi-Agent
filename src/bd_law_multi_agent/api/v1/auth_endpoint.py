@@ -4,6 +4,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
+from fastapi import Form
 
 from bd_law_multi_agent.core.config import config
 from bd_law_multi_agent.core.security import create_access_token, get_current_active_user
@@ -63,6 +64,47 @@ async def register_user(
             detail="Email already registered",
         )
     return create_user(user_in, db)
+
+@router.post("/promote-to-admin", summary="Promote user to admin")
+async def promote_to_admin(
+    email: str = Form(..., description="Email of user to promote"),
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    
+    from bd_law_multi_agent.models.user_model import User as DBUser  # <-- Add this import
+    
+    if not current_user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only admins can promote users"
+        )
+    
+    
+    user = db.query(DBUser).filter(DBUser.email == email).first()  # <-- Changed User to DBUser
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    if user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User is already an admin"
+        )
+    
+    try:
+        user.is_admin = True
+        db.commit()
+        return {"status": "success", "message": f"{email} promoted to admin"}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Promotion failed: {str(e)}"
+        )
+
 
 
 @router.get("/me", response_model=User, summary="Get current user info")

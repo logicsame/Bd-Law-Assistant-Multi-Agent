@@ -206,7 +206,10 @@ class AnalysisVectorDB:
         finally:
             db.close()
             
-    def update_document(self, source_hash: str, metadata: dict):
+    from typing import Dict, Any
+    import logging
+
+    def update_document(self, source_hash: str, metadata: Dict[str, Any]):
         """Update existing document metadata in both stores"""
         db = next(get_analysis_db())
         try:
@@ -214,12 +217,13 @@ class AnalysisVectorDB:
             doc = db.query(AnalysisDocument)\
                 .filter(AnalysisDocument.source_path == source_hash)\
                 .first()
-        
+    
             if doc:
-                if 'analysis' in metadata:
-                    doc.full_text = metadata.get('analysis', doc.full_text)
-                if 'classification' in metadata:
-                    doc.description = str(metadata.get('classification', doc.description))
+                if 'analysis_result' in metadata:
+                    doc.full_text = metadata.get('analysis_result', doc.full_text)
+                # Don't try to update description as it doesn't exist in AnalysisDocument
+                # Only update fields that actually exist in the model
+                doc.last_accessed = metadata.get('last_accessed', datetime.utcnow().isoformat())
                 db.commit()
 
             # Get all FAISS documents matching the source_path
@@ -228,7 +232,7 @@ class AnalysisVectorDB:
                 filter={"source_path": source_hash},
                 k=1000  # Get all matching documents
             )
-        
+    
             if docs:
                 # Get FAISS internal IDs for deletion
                 faiss_ids = [
@@ -236,11 +240,11 @@ class AnalysisVectorDB:
                     for i in range(len(docs))
                     if i in self.vector_store.index_to_docstore_id
                 ]
-            
+        
                 # Delete old entries
                 if faiss_ids:
                     self.vector_store.delete(faiss_ids)
-            
+        
                 # Recreate document with updated metadata
                 updated_doc = Document(
                     page_content=docs[0].page_content,

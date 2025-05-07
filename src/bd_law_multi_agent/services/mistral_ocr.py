@@ -13,7 +13,6 @@ class MistralOCRTextExtractor:
     A class to extract text from documents and images using Mistral AI's OCR capabilities.
     Simplified to focus only on text extraction.
     """
-    
     VALID_DOCUMENT_EXTENSIONS = {".pdf"}
     VALID_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png"}
     
@@ -27,10 +26,12 @@ class MistralOCRTextExtractor:
         self.api_key = config.MISTRAL_API_KEY
         self.client = Mistral(api_key=self.api_key)
     
+    
+    
+    
     def upload_pdf(self, content: bytes, filename: str) -> str:
         """
         Upload a PDF file to Mistral.
-        
         Args:
             content: PDF file content as bytes
             filename: Name of the file

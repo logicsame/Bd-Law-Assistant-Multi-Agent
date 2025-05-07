@@ -72,13 +72,14 @@ class User(BaseModel):
     email: str
     full_name: Optional[str] = None
     is_active: bool
-
+    is_admin: bool
     class Config:
         # orm_mode = True
         from_attributes = True
 
 class DocumentResponse(BaseModel):
     id: str  # Changed from document_id to match model
+    admin_email: str
     source_type: str
     source_path: str
     description: Optional[str] = None

@@ -7,6 +7,7 @@ import aiofiles
 from sqlalchemy.orm import Session
 from datetime import datetime
 from sqlalchemy.orm import joinedload
+from fastapi import HTTPException, status
 
 from bd_law_multi_agent.utils.common import get_file_type, get_url_type
 from bd_law_multi_agent.schemas.schemas import DocumentResponse, SearchQuery, SearchResult
@@ -37,6 +38,14 @@ async def upload_document(
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
+    
+    
+    if not current_user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only admin users can upload documents"
+        )
+    
     """Upload a document (PDF or image) or process a URL"""
     try:
         if not file and not url:
@@ -51,6 +60,7 @@ async def upload_document(
             id=document_id,
             user_id=current_user.id,
             description=description,
+            admin_email=current_user.email,
             created_at=datetime.utcnow(),
             text_preview="Processing..."  # Default preview text
         )

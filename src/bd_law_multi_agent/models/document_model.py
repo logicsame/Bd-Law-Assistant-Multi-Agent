@@ -7,20 +7,19 @@ from datetime import datetime
 from bd_law_multi_agent.database.database import Base
 
 class Document(Base):
-    """Document storage model"""
     __tablename__ = "documents"
 
     id = Column(String, primary_key=True, index=True)
     user_id = Column(String, ForeignKey('users.id'), nullable=False)
+    admin_email = Column(String, nullable=False)  
     source_type = Column(String, nullable=False)
     source_path = Column(String, nullable=False)
     description = Column(Text)
-    text_preview = Column(Text)  # For initial preview text
-    full_text = Column(Text)     # For complete text from background processing
+    text_preview = Column(Text)
+    full_text = Column(Text)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
-    # Relationships
     owner = relationship("User", back_populates="documents")
     chunks = relationship("DocumentChunk", back_populates="document", cascade="all, delete-orphan")
 

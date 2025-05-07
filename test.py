@@ -67,3 +67,4 @@
 #         print(f"Score: {score:.4f} | Content: {doc.page_content} | Source: {doc.metadata['source']}")
 
 
+

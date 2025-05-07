@@ -2,7 +2,20 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import os
+from pathlib import Path
 from bd_law_multi_agent.core.config import config
+
+def ensure_db_directories():
+    # For main database
+    main_db_path = Path(config.DATABASE_PATH)
+    main_db_path.parent.mkdir(parents=True, exist_ok=True)
+    
+    # For analysis database
+    analysis_db_dir = Path(config.ANALYSIS_VECTOR_DB_PATH)
+    analysis_db_dir.mkdir(parents=True, exist_ok=True)
+
+# Ensure directories exist before creating engines
+ensure_db_directories()
 
 # Create main database engine
 main_engine = create_engine(
@@ -11,8 +24,7 @@ main_engine = create_engine(
 )
 
 # Create analysis database engine
-analysis_db_path = os.path.join(config.ANALYSIS_VECTOR_DB_PATH, "analyzed_database.db")
-os.makedirs(os.path.dirname(analysis_db_path), exist_ok=True)
+analysis_db_path = str(Path(config.ANALYSIS_VECTOR_DB_PATH) / "analyzed_database.db")
 analysis_engine = create_engine(
     f"sqlite:///{analysis_db_path}",
     connect_args={"check_same_thread": False}
