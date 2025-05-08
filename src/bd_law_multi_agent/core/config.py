@@ -48,7 +48,7 @@ class Config(BaseSettings):
     EMBEDDING_MODEL: str = Field(default="text-embedding-3-large", description="Model used for text embeddings")
     TEMP_EMBEDDING_MODEL: str = Field(default="dwzhu/e5-base-4k", description="Temporary model for text embeddings")
     LLM_MODEL: str = Field(default="gpt-4.1-2025-04-14", description="Large language model for text generation")
-    GROQ_LLM_MODEL: str = Field(default="meta-llama/llama-4-scout-17b-16e-instruct", description="Groq model for text generation")
+    GROQ_LLM_MODEL: str = Field(default="meta-llama/llama-4-maverick-17b-128e-instruct", description="Groq model for text generation")
     OPENAI_API_BASE_URL: str = Field(default_factory=lambda: os.getenv("OPENAI_API_KEY", ""), description="Open API key")
     
     # Text Splitting Configuration
