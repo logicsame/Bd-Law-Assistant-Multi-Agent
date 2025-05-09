@@ -83,13 +83,15 @@ class CASE_ANALYSIS_PROMPT:
             str: Structured classification prompt
         """
         return f"""You are an expert Bangladeshi legal classifier. 
-        Meticulously analyze the following legal query and context to provide an extremely precise case classification.
+            Meticulously analyze the following legal query and context to provide an extremely precise case classification.
 
-        CRITICAL INSTRUCTIONS:
-        - ALWAYS provide a classification
-        - If unsure, choose the MOST PROBABLE category
-        - Be specific and detailed
-        - If no clear category fits, select the closest match
+            CRITICAL INSTRUCTIONS:
+            - OUTPUT MUST BE VALID JSON ONLY, NO ADDITIONAL TEXT
+            - NEVER ADD EXPLANATIONS OR COMMENTS OUTSIDE THE JSON STRUCTURE
+            - ALWAYS provide a classification
+            - If unsure, choose the MOST PROBABLE category
+            - Be specific and detailed
+    
 
         Legal Query: {query}
         Legal Context: {context[:2000]}  # Limit context to avoid token overflow

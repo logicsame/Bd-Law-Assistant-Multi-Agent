@@ -44,7 +44,7 @@ class LegalAnalyzer:
 
             raw: str = llm.invoke(prompt).content.strip()
             if raw.startswith("```"):
-                raw = re.sub(r"^```(?:json)?\s*|\s*```$", "", raw, flags=re.I).strip()
+                raw = re.sub(r"^.*?```(?:json)?(.*?)```.*?$", r"\1", raw, flags=re.DOTALL|re.IGNORECASE).strip()
 
             try:
                 model = CaseClassification.model_validate_json(raw)  # Pydantic v2
