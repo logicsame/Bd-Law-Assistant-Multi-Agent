@@ -214,11 +214,10 @@ class LegalAnalyzer:
     @classmethod
     def generate_legal_argument(
         cls, case_details: str, context: str, category: str
-    ) -> Generator[str, None, None]: # Changed return type
+    ) -> str:
         try:
-            # llm = ChatOpenAI(model=config.LLM_MODEL, temperature=0.3, max_tokens=2048)
-            llm = ChatGroq(model = config.GROQ_LLM_MODEL, temperature=config.TEMPERATURE)
-
+            # llm = ChatOpenAI(model=Config.LLM_MODEL, temperature=0.3, max_tokens=2048)
+            llm = ChatGroq(model = config.GROQ_LLM_MODEL, temperature= config.TEMPERATURE)
             example = ArgumentGenerationPrompt.Example_Arguemnts().get(
                 category,
                 next(iter(ArgumentGenerationPrompt.Example_Arguemnts().values())),
@@ -231,11 +230,9 @@ class LegalAnalyzer:
                 example_argument=example,
             )
 
-            for chunk in llm.stream(prompt):
-                if chunk.content:
-                    yield chunk.content
-                    
+            return llm.invoke(prompt).content
         except Exception as exc:
             logger.error("Argument generation error: %s", exc)
-            yield "Could not generate argument at this time."
+            return "Could not generate argument at this time."
+
 

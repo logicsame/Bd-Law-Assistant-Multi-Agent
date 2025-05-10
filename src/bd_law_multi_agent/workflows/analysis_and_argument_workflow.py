@@ -315,7 +315,7 @@ def generate_follow_ups(state: AgentState):
 def generate_legal_argument(state: AgentState):
     logger.info("Generating legal argument (streaming)...")
     try:
-        case_details = state["analysis"]  # Expected to be a string after generate_follow_ups
+        case_details = state["analysis"]  
         if hasattr(case_details, '__iter__') and not isinstance(case_details, str):
             logger.warning("generate_legal_argument received 'analysis' as a stream. Consuming it now.")
             case_details = "".join([chunk for chunk in case_details])
@@ -325,7 +325,6 @@ def generate_legal_argument(state: AgentState):
         docs = rag_system.vector_store.similarity_search(
             case_details,
             k=config.MAX_RETRIEVED_DOCS,
-            filter={"document_type": "Legislation"},
             similarity_threshold=0.75
         )
         
@@ -340,9 +339,8 @@ def generate_legal_argument(state: AgentState):
             context=context_for_argument,
             category=classification["primary_category"]
         )
-       
         return {
-            "documents": docs, # If this node fetches new documents
+            "documents": docs,  
             "argument": argument_generator,  
             "legal_category": classification["primary_category"],
             "current_step": "generated_argument_streaming"
@@ -387,17 +385,18 @@ def update_history(state: AgentState):
     ]
 
     updates = {
-        "conversation_history": new_history, 
-        "current_step": "updated_history_streaming"
-    }
+            "conversation_history": new_history, 
+            "current_step": "updated_history_streaming",
+            "documents": state.get("documents", []) 
+        }
     if collected_analysis and not isinstance(analysis_val, str):
-        updates["analysis"] = collected_analysis # Store consumed string
+        updates["analysis"] = collected_analysis #
     if collected_argument and not isinstance(argument_val, str):
-        updates["argument"] = collected_argument # Store consumed string
+        updates["argument"] = collected_argument 
         
     return updates
 
-# Conditional Edge Logic
+
 def should_continue(state: AgentState):
     # This logic might need adjustment if query processing changes due to streaming
     if "follow_up" in state["query"].lower(): # Assuming query is always a string
