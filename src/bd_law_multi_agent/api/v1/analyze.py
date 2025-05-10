@@ -21,6 +21,7 @@ from bd_law_multi_agent.schemas.schemas import User
 from fastapi import Depends
 from sqlalchemy.orm import Session
 from bd_law_multi_agent.database.database import get_db, get_analysis_db, SessionLocal
+from bd_law_multi_agent.models.document_model import UserHistory
 
 router = APIRouter()
 
@@ -101,12 +102,13 @@ async def analyze_case(
             for doc in final_state["documents"]
         ]
         
-        # Add background task for processing the analysis
         background_tasks.add_task(
             process_analysis,
             temp_file_path=temp_file_path,
             analysis_id=analysis_id,
             user_id=current_user.id,
+            user_email=current_user.email,       
+            user_name=current_user.full_name,     
             file_name=file.filename,
             extracted_text=extracted_text,
             analysis_result=final_state["analysis"],
@@ -137,6 +139,8 @@ async def process_analysis(
     temp_file_path: str,
     analysis_id: str,
     user_id: str,
+    user_email: str,
+    user_name: str,
     file_name: str,
     extracted_text: str,
     analysis_result: str,
@@ -180,14 +184,34 @@ async def process_analysis(
                 metadata={
                     "last_accessed": str(datetime.now()),
                     "analysis_result": analysis_result
-                    # Removed 'classification' that was causing the error
                 }
             )
             logger.info(f"Updated existing analysis document for: {file_name}")
 
+        # Create history entry
+        history_entry = UserHistory(
+            id=str(uuid.uuid4()),
+            user_id=user_id,
+            user_email=user_email,
+            user_name=user_name,
+            feature_used="case_analysis",
+            case_file_name=file_name,
+            case_file_content=extracted_text,
+            agent_response={
+                "analysis": analysis_result,
+                "classification": classification,
+                "timestamp": datetime.utcnow().isoformat()
+            }
+        )
+        
+        db.add(history_entry)
+        db.commit()
+        logger.info(f"Created history entry for user {user_email}")
+
     except Exception as e:
         logger.error(f"Background analysis processing error: {str(e)}")
         logger.error(traceback.format_exc())
+        db.rollback()
     finally:
         # Clean up temp file
         if os.path.exists(temp_file_path):

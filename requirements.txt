@@ -19,5 +19,4 @@ alembic
 psycopg2-binary
 pypdf
 langchain-mcp-adapters
-
 -e .

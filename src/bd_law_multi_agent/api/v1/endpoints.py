@@ -137,59 +137,7 @@ async def upload_document(
         raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
 
 
-@app.post("/search", response_model=list[SearchResult])
-async def search_documents(
-    query: SearchQuery,
-    current_user: User = Depends(get_current_active_user)
-):
-    """Search documents in vector store"""
-    results = vector_db.search(query.query, query.top_k if query.top_k else None)
-    return results
 
-
-@app.delete("/documents/{document_id}")
-async def delete_document(
-    document_id: str,
-    current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
-):
-    """Delete a document from both stores"""
-    # Delete from SQLite
-    db_document = db.query(Document).filter(Document.id == document_id).first()
-    if not db_document:
-        raise HTTPException(status_code=404, detail="Document not found")
-    
-    db.delete(db_document)
-    db.commit()
-    
-    # Delete from vector store
-    success = vector_db.delete_document(document_id)
-    if not success:
-        raise HTTPException(status_code=500, detail="Failed to delete from vector store")
-    
-    return {"status": "success", "message": f"Document {document_id} deleted"}
-
-
-@app.get("/documents/{document_id}", response_model=DocumentResponse)
-async def get_document(
-    document_id: str,
-    current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
-):
-    """Get document with all chunks"""
-    document = db.query(Document).filter(Document.id == document_id).first()
-    if not document:
-        raise HTTPException(status_code=404, detail="Document not found")
-    
-    chunks = db.query(DocumentChunk).filter(DocumentChunk.document_id == document_id).all()
-    
-    return {
-        **document.__dict__,
-        "chunks": chunks,
-        "owner": document.owner
-    }
-
-# Health check endpoint
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""

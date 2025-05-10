@@ -58,4 +58,19 @@ class AnalysisChunk(AnalysisBase):  # Use analysis base model
     chunk_index = Column(Integer)
     content = Column(Text)
     chunk_metadata = Column(Text)
+    
+    
+# In document_model.py (AnalysisBase section)
+class UserHistory(AnalysisBase):
+    __tablename__ = "user_history"
+    
+    id = Column(String, primary_key=True, index=True)
+    user_id = Column(String, index=True)
+    user_email = Column(String)
+    user_name = Column(String)
+    feature_used = Column(String)  
+    case_file_name = Column(String)
+    case_file_content = Column(Text)
+    agent_response = Column(JSON)  # Stores the full response object
+    created_at = Column(DateTime, default=datetime.utcnow)
 

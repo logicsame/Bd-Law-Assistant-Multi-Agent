@@ -44,6 +44,26 @@ class Config(BaseSettings):
             description="SQLAlchemy database URL"
         )
     API_V1_STR: str = Field(default=os.environ.get("API_V1_STR", "/api/v1"))
+    
+    
+        # ================================= LEGAL TEXT ANALYSIS CONFIGURATION ==========================================
+    LEGAL_STOPWORDS: set = Field(
+        default_factory=lambda: {
+            'shall', 'may', 'said', 'provided', 'whereas', 'therefore',
+            'notwithstanding', 'according', 'hereby', 'thereof'
+        },
+        description="Set of legal stopwords to ignore during analysis"
+    )
+    CONTEXT_WINDOW_SIZE: int = Field(
+        default=800,
+        description="Size of the context window in characters for keyword extraction or context-aware tasks"
+    )
+    MIN_KEYWORD_LENGTH: int = Field(
+        default=4,
+        description="Minimum length of a keyword to be considered during extraction"
+    )
+
+    
     # ================================= ANALYSIS AND ARGUEMENT GENERATION CONFIGURATION ================================
     EMBEDDING_MODEL: str = Field(default="text-embedding-3-large", description="Model used for text embeddings")
     TEMP_EMBEDDING_MODEL: str = Field(default="dwzhu/e5-base-4k", description="Temporary model for text embeddings")
@@ -82,7 +102,7 @@ class Config(BaseSettings):
         description="Severity levels for case complexity classification"
     )
     
-    MAX_RETRIEVED_DOCS: int = Field(default=5, description="Maximum number of documents to retrieve")
+    MAX_RETRIEVED_DOCS: int = Field(default=20, description="Maximum number of documents to retrieve")
     CITATION_LENGTH: int = Field(default=500, description="Length limit for citations")
     
     # ================================= SEARCH SYSTEM CONFIGURATION ==========================================

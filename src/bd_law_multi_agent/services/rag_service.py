@@ -201,13 +201,16 @@ class PersistentLegalRAG:
             
             logger.info(f"Retrieved {len(docs)} relevant documents")
             
-            # Build context
+            
             context = "\n\n".join([
-                f"Source: {doc.metadata.get('source', 'Unknown')}\n"
-                f"Page: {doc.metadata.get('page', 'N/A')}\n"
-                f"Content:\n{doc.page_content[:config.CITATION_LENGTH]}"
+                f"Source: {doc.metadata.get('source_path', 'Unknown')}\n"
+                f"Page: {doc.metadata.get('page_number', 'N/A')}\n"
+                f"Content:\n{doc.page_content}"
                 for doc in docs
             ])
+
+
+
 
             # Classify case
             classification = LegalAnalyzer.classify_case(query, context)
@@ -267,7 +270,7 @@ class PersistentLegalRAG:
             
             context = "\n\n".join([
                 f"Source: {doc.metadata.get('source', 'Unknown')}\n"
-                f"Content:\n{doc.page_content[:config.CITATION_LENGTH]}"
+                f"Content:\n{doc.page_content}"
                 for doc in docs
             ])
             

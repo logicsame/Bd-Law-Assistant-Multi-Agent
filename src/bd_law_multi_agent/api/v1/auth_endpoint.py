@@ -11,8 +11,9 @@ from bd_law_multi_agent.core.security import create_access_token, get_current_ac
 from bd_law_multi_agent.database.database import get_db
 from bd_law_multi_agent.schemas.schemas import User, UserCreate, Token
 from bd_law_multi_agent.services.user_services import authenticate_user, create_user, get_user_by_email
-
-# Note: No prefix here - the prefix is added in main.py
+from bd_law_multi_agent.models.document_model import UserHistory
+from bd_law_multi_agent.database.database import get_analysis_db
+from bd_law_multi_agent.core.common import logger
 router = APIRouter(tags=["authentication"])
 
 
@@ -117,3 +118,31 @@ async def read_users_me(
     Requires authentication.
     """
     return current_user
+
+
+# Add to analyze.py or endpoints.py
+@router.get("/history", summary="Get user analysis history")
+async def get_user_history(
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_analysis_db)
+):
+    """Get analysis history for the current user"""
+    try:
+        history = db.query(UserHistory)\
+            .filter(UserHistory.user_id == current_user.id)\
+            .order_by(UserHistory.created_at.desc())\
+            .all()
+        
+        return [
+            {
+                "id": item.id,
+                "case_file_name": item.case_file_name,
+                "created_at": item.created_at.isoformat(),
+                "case_file_content": item.case_file_content,
+                "agent_response": item.agent_response
+            }
+            for item in history
+        ]
+    except Exception as e:
+        logger.error(f"History retrieval error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Could not retrieve history")

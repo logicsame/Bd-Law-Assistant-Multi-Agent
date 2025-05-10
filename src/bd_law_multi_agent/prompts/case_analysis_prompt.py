@@ -8,12 +8,6 @@ class CASE_ANALYSIS_PROMPT:
 
     @classmethod
     def get_legal_analysis_prompt(cls) -> str:
-        """
-        Returns the comprehensive legal analysis prompt template.
-        
-        Returns:
-            str: Structured prompt for legal analysis
-        """
         return """
         You are an expert legal analyst specializing in Bangladeshi law. Provide a comprehensive analysis 
         considering the following aspects:
@@ -22,6 +16,11 @@ class CASE_ANALYSIS_PROMPT:
         2. **Jurisprudence**: Cite applicable case law and precedents from Bangladesh courts.
         3. **Strategic Considerations**: Provide practical legal strategies and recommendations.
         4. **Risk Assessment**: Evaluate potential legal risks and outcomes.
+
+        STRICT INSTRUCTIONS:
+        - Only reference laws from provided context
+        - If unsure, state "No relevant provision found in provided documents"
+        - Never invent section numbers or case names
 
         Case Context:
         {classification_context}
@@ -32,7 +31,7 @@ class CASE_ANALYSIS_PROMPT:
         Legal Query:
         {query}
 
-        Provide your analysis in this structured format:
+    Provide your analysis in this structured format:
         - **Legal Basis**: Relevant laws and provisions
         - **Case Law**: Applicable precedents
         - **Procedural Analysis**: Court processes involved
@@ -72,45 +71,34 @@ class CASE_ANALYSIS_PROMPT:
     def get_case_classification_prompt(cls, query: str, context: str, categories: List[str], complexity_levels: List[str]) -> str:
         """
         Generate a comprehensive case classification prompt.
-        
-        Args:
-            query (str): The legal query to be classified
-            context (str): Retrieved legal context
-            categories (List[str]): Available case categories
-            complexity_levels (List[str]): Available complexity levels
-        
-        Returns:
-            str: Structured classification prompt
         """
         return f"""You are an expert Bangladeshi legal classifier. 
-            Meticulously analyze the following legal query and context to provide an extremely precise case classification.
+        Analyze the following legal query and context to provide a precise case classification.
 
-            CRITICAL INSTRUCTIONS:
-            - OUTPUT MUST BE VALID JSON ONLY, NO ADDITIONAL TEXT
-            - NEVER ADD EXPLANATIONS OR COMMENTS OUTSIDE THE JSON STRUCTURE
-            - ALWAYS provide a classification
-            - If unsure, choose the MOST PROBABLE category
-            - Be specific and detailed
-    
+        CRITICAL INSTRUCTIONS:
+        - You MUST respond with ONLY a valid JSON object following the exact structure below
+        - Do NOT include any explanatory text, markdown formatting, or code blocks
+        - If unsure, choose the MOST PROBABLE category
+        - Be specific and detailed
 
         Legal Query: {query}
         Legal Context: {context[:2000]}  # Limit context to avoid token overflow
 
-        MANDATORY OUTPUT FORMAT:
+        MANDATORY OUTPUT FORMAT - RESPOND WITH THIS JSON STRUCTURE ONLY:
         {{
             "primary_category": "[EXACT CATEGORY FROM LIST]",
             "secondary_category": "[OPTIONAL SECONDARY CATEGORY]",
             "complexity_level": "[EXACT COMPLEXITY LEVEL]",
-            "legal_domains": ["List", "of", "Domains"],
+            "legal_domains": ["Domain1", "Domain2"],
             "risk_assessment": "Brief risk description",
             "initial_strategy": "Concise initial legal approach",
-            "key_considerations": ["Critical", "Legal", "Points"]
+            "key_considerations": ["Point1", "Point2", "Point3"]
         }}
 
         AVAILABLE CATEGORIES: {", ".join(categories)}
         COMPLEXITY LEVELS: {", ".join(complexity_levels)}
 
-        PROVIDE A DEFINITIVE CLASSIFICATION. NO AMBIGUITY ALLOWED."""
+        PROVIDE VALID JSON ONLY. NO ADDITIONAL TEXT."""
 
     @classmethod
     def get_legal_summary_prompt(cls) -> str:
