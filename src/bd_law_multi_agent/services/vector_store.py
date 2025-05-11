@@ -326,7 +326,7 @@ class DocumentVectorDatabase:
                 "source_type": source_type,
                 "source_path": source_path,
                 "timestamp": self._get_current_timestamp(),
-                "document_type": "Legislation"  
+                "document_type": "General"  
             }
         
         if description:

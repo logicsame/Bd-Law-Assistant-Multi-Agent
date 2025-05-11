@@ -204,6 +204,7 @@ class PersistentLegalRAG:
             
             context = "\n\n".join([
                 f"Source: {doc.metadata.get('source_path', 'Unknown')}\n"
+
                 f"Page: {doc.metadata.get('page_number', 'N/A')}\n"
                 f"Content:\n{doc.page_content}"
                 for doc in docs

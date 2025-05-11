@@ -2,11 +2,10 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.docs import get_swagger_ui_html
-from fastapi.openapi.utils import get_openapi
 from sqlalchemy import text
 import time 
 
-from bd_law_multi_agent.api.v1 import endpoints, auth_endpoint, argument_generaion
+from bd_law_multi_agent.api.v1 import endpoints, auth_endpoint, argument_generaion,legal_chat
 from bd_law_multi_agent.api.v1 import analyze
 from bd_law_multi_agent.core.config import config
 from bd_law_multi_agent.database.database import (
@@ -124,6 +123,13 @@ app.include_router(
     argument_generaion.router,
     prefix=config.API_V1_STR,
     tags = ['argument_generation'],
+    dependencies=[Depends(get_current_active_user)]
+)
+
+app.include_router(
+    legal_chat.router,
+    prefix=config.API_V1_STR,
+    tags=['Legal-Chat_system'],
     dependencies=[Depends(get_current_active_user)]
 )
 
