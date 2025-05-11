@@ -322,12 +322,12 @@ class DocumentVectorDatabase:
         """
         # Create metadata
         metadata = {
-            "document_id": document_id,
-            "source_type": source_type,
-            "source_path": source_path,
-            "timestamp": self._get_current_timestamp(),
-    
-        }
+                "document_id": document_id,
+                "source_type": source_type,
+                "source_path": source_path,
+                "timestamp": self._get_current_timestamp(),
+                "document_type": "Legislation"  
+            }
         
         if description:
             metadata["description"] = description

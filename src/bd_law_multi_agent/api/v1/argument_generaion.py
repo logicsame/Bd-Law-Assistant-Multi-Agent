@@ -82,10 +82,14 @@ async def generate_argument(
                 initial_state, 
                 {"recursion_limit": 50}
             )
+
+            if "argument" not in result or not result["argument"]:
+                if not result.get("documents"):
+                    logger.warning("No documents retrieved, using direct generation")
+                else:
+                    logger.error("Documents found but argument missing!")
         
         logger.info(f"Final workflow state: current_step={result.get('current_step')}, has_argument={bool(result.get('argument'))}")
-        
-        # Extract sources from the retrieved documents
         sources = []
         if "documents" in result and result["documents"]:
             sources = [
@@ -97,10 +101,8 @@ async def generate_argument(
             ]
             
         
-        # Check if argument exists or use fallback
+  
         if "argument" not in result or not result["argument"]:
-            logger.warning("No argument found in result, using direct generation")
-            # Direct generation as fallback
             context = "\n\n".join([
                 f"Source: {doc.metadata.get('source', 'Unknown')}\nContent: {doc.page_content[:500]}"
                 for doc in result.get("documents", [])
