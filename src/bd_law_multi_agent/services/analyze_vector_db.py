@@ -1,4 +1,3 @@
-# analysis_vector_db.py
 import os
 import uuid
 from typing import List, Dict, Any
@@ -10,25 +9,42 @@ from bd_law_multi_agent.core.config import config
 from bd_law_multi_agent.database.database import get_db,get_analysis_db
 from bd_law_multi_agent.models.document_model import DocumentChunk
 from bd_law_multi_agent.services.vector_store import CustomHuggingFaceEmbeddings
-from bd_law_multi_agent.core.common import logger
+from bd_law_multi_agent.utils.logger import logger
+
 from datetime import datetime
 from bd_law_multi_agent.models.document_model import AnalysisChunk, AnalysisDocument
 
 
 
 class AnalysisVectorDB:
+    _instance = None
+
+    def __new__(cls, *args, **kwargs):
+        if cls._instance is None:
+            cls._instance = super(AnalysisVectorDB, cls).__new__(cls)
+            cls._instance._initialized = False
+        return cls._instance
+    
+    
+    
     def __init__(self):
-        """Initialize analysis database with proper SQLite and FAISS integration"""
-        self.embeddings = CustomHuggingFaceEmbeddings(
-            model_name=config.TEMP_EMBEDDING_MODEL
-        )
-        self.persist_dir = config.ANALYSIS_VECTOR_DB_PATH
-        self.text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=config.CHUNK_SIZE,
-            chunk_overlap=config.CHUNK_OVERLAP,
-            length_function=len,
-        )
-        self.vector_store = self._init_vector_store()
+        if not self._initialized:
+            """Initialize analysis database with proper SQLite and FAISS integration"""
+            self.embeddings = CustomHuggingFaceEmbeddings(
+                model_name=config.TEMP_EMBEDDING_MODEL
+            )
+            self.persist_dir = config.ANALYSIS_VECTOR_DB_PATH
+            self.text_splitter = RecursiveCharacterTextSplitter(
+                chunk_size=config.CHUNK_SIZE,
+                chunk_overlap=config.CHUNK_OVERLAP,
+                length_function=len,
+            )
+            self.vector_store = self._init_vector_store()
+            self._initialized = True
+
+
+
+
 
     def _init_vector_store(self) -> FAISS:
         """Initialize FAISS store with SQLite backend"""
@@ -55,7 +71,7 @@ class AnalysisVectorDB:
                 metadatas=[{
                     "document_id": "system-init",
                     "source": "system",
-                    "unique_id": str(uuid.uuid4())  # Fixed parenthesis here
+                    "unique_id": str(uuid.uuid4())  
                 }]
             )
             store.save_local(self.persist_dir)
@@ -75,7 +91,7 @@ class AnalysisVectorDB:
         new_doc = AnalysisDocument(
             id=document_id,
             user_id=metadata.get("user_id", "system"),
-            source_type=metadata.get("source_type", "analysis"),  # Now matches model
+            source_type=metadata.get("source_type", "analysis"),  
             source_path=metadata["source_path"],
             document_type=metadata.get("document_type", "RawCase"),
             created_at=datetime.utcnow(),
@@ -109,12 +125,12 @@ class AnalysisVectorDB:
     def add_documents(self, documents: List[Document]):
         """Use analysis database connection"""
         try:
-            db = next(get_analysis_db())  # Analysis session
+            db = next(get_analysis_db())  
             for doc in documents:
                 metadata = doc.metadata.copy()
                 metadata.update({
                     "source_path": metadata.get("source_path", str(uuid.uuid4())),
-                    "source_type": metadata.get("source_type", "analysis"),  # Keep source_type
+                    "source_type": metadata.get("source_type", "analysis"), 
                     "timestamp": datetime.utcnow().isoformat()
                 })
                 
@@ -122,7 +138,6 @@ class AnalysisVectorDB:
                 texts = self.text_splitter.split_text(doc.page_content)
                 self._store_chunks(document_id, texts, metadata)
                 
-                # FAISS storage
                 faiss_docs = [
                     Document(
                         page_content=chunk,
@@ -181,7 +196,6 @@ class AnalysisVectorDB:
         """Delete a document and its chunks"""
         db: Session = next(get_db())
         try:
-            # Delete from SQLite
             db.query(DocumentChunk)\
                 .filter(DocumentChunk.document_id == document_id)\
                 .delete()
@@ -213,7 +227,6 @@ class AnalysisVectorDB:
         """Update existing document metadata in both stores"""
         db = next(get_analysis_db())
         try:
-            # Update SQLite document
             doc = db.query(AnalysisDocument)\
                 .filter(AnalysisDocument.source_path == source_hash)\
                 .first()
@@ -221,31 +234,26 @@ class AnalysisVectorDB:
             if doc:
                 if 'analysis_result' in metadata:
                     doc.full_text = metadata.get('analysis_result', doc.full_text)
-                # Don't try to update description as it doesn't exist in AnalysisDocument
-                # Only update fields that actually exist in the model
                 doc.last_accessed = metadata.get('last_accessed', datetime.utcnow().isoformat())
                 db.commit()
 
-            # Get all FAISS documents matching the source_path
+
             docs = self.vector_store.similarity_search(
                 "",
                 filter={"source_path": source_hash},
-                k=1000  # Get all matching documents
+                k=1000  
             )
     
             if docs:
-                # Get FAISS internal IDs for deletion
                 faiss_ids = [
                     self.vector_store.index_to_docstore_id[i]
                     for i in range(len(docs))
                     if i in self.vector_store.index_to_docstore_id
                 ]
         
-                # Delete old entries
                 if faiss_ids:
                     self.vector_store.delete(faiss_ids)
         
-                # Recreate document with updated metadata
                 updated_doc = Document(
                     page_content=docs[0].page_content,
                     metadata={

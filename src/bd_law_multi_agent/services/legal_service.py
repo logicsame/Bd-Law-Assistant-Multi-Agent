@@ -118,7 +118,8 @@ from typing import List, Dict, Any, Generator # Added Generator
 
 from langchain_openai import ChatOpenAI
 from langchain_groq import ChatGroq
-from bd_law_multi_agent.core.common import logger
+from bd_law_multi_agent.utils.logger import logger
+
 from bd_law_multi_agent.core.config import config
 from bd_law_multi_agent.prompts.case_analysis_prompt import CASE_ANALYSIS_PROMPT
 from bd_law_multi_agent.prompts.argument_generation_prompt import ArgumentGenerationPrompt

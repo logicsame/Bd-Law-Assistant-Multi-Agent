@@ -4,7 +4,8 @@ from bd_law_multi_agent.core.config import config
 from bd_law_multi_agent.services.rag_service import PersistentLegalRAG
 from bd_law_multi_agent.prompts.lega_chat_prompy import LegalChatbotPrompts
 from langchain_openai import ChatOpenAI
-from bd_law_multi_agent.core.common import logger
+from bd_law_multi_agent.utils.logger import logger
+
 
 
 class LegalChatbot:
@@ -121,13 +122,19 @@ class LegalChatbot:
     def _get_sources(self, context: str) -> List[Dict]:
         """Extract sources from context string"""
         sources = []
+        current_source = None
         for line in context.split("\n"):
             if line.startswith("Source:"):
-                source = line.split("Source: ")[1].strip()
-                # Add both source_path and excerpt
-                sources.append({
-                    "source": source,
-                    "excerpt": next((l.split("Content:")[1].strip() for l in context.split("\n") 
-                                if l.startswith("Content:") and source in l), ""), 
-                })
+                if current_source:  # Save previous source
+                    sources.append(current_source)
+                current_source = {
+                    "source": line.split("Source: ")[1].strip(),
+                    "excerpt": ""
+                }
+            elif line.startswith("Content:"):
+                if current_source:
+                    current_source["excerpt"] = line.split("Content:")[1].strip()
+        # Add final source
+        if current_source:
+            sources.append(current_source)
         return sources[:config.MAX_RETRIEVED_DOCS]  

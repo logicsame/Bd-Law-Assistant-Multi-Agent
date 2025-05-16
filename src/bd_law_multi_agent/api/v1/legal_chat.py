@@ -2,7 +2,8 @@ from fastapi import APIRouter, HTTPException, Request, Depends, BackgroundTasks
 from bd_law_multi_agent.schemas.chat_sc import ChatbotRequest, ChatbotResponse
 from bd_law_multi_agent.workflows.chat_workflow import chat_agent
 from langchain.callbacks.manager import tracing_v2_enabled
-from bd_law_multi_agent.core.common import logger
+from bd_law_multi_agent.utils.logger import logger
+
 from bd_law_multi_agent.core.security import get_current_active_user
 from bd_law_multi_agent.models.document_model import UserHistory
 from bd_law_multi_agent.database.database import get_analysis_db

@@ -6,7 +6,7 @@ import tempfile
 import aiofiles
 from bd_law_multi_agent.schemas.analyze_sc import AnalysisRequest, AnalysisResponse, DocumentSource, ClassificationDetail
 from bd_law_multi_agent.core.config import config
-from bd_law_multi_agent.core.common import logger   
+from bd_law_multi_agent.utils.logger import logger
 from langchain.callbacks.manager import tracing_v2_enabled
 from fastapi import Request
 from fastapi import APIRouter, HTTPException, UploadFile, File
@@ -152,21 +152,20 @@ async def process_analysis(
         # Create AnalysisVectorDB instance
         analysis_db = AnalysisVectorDB()
         
-        # Create raw case document
         raw_case_doc = Document(
-            page_content=extracted_text,
-            metadata={
-                "source": file_name,
-                "source_path": file_name,
-                "document_type": "RawCase",
-                "created_at": str(datetime.now()),
-                "file_source": file_name,
-                "user_id": user_id,
-                "unique_id": analysis_id,
-                "analysis_result": analysis_result,
-                "classification": classification
-            }
-        )
+        page_content=extracted_text,
+        metadata={
+            "source": file_name,
+            "source_path": file_name,
+            "document_type": "RawCase",
+            "created_at": str(datetime.now()),
+            "file_source": file_name,
+            "user_id": user_id,
+            "unique_id": analysis_id,
+            "full_text": extracted_text, 
+            "classification": classification
+        }
+    )
 
         # Check if document already exists
         existing_doc = db.query(AnalysisDocument)\

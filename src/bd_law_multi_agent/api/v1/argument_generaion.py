@@ -16,15 +16,15 @@ from bd_law_multi_agent.database.database import get_analysis_db
 from bd_law_multi_agent.models.document_model import UserHistory
 from datetime import datetime
 from bd_law_multi_agent.services.legal_service import LegalAnalyzer
-import logging
 from fastapi import APIRouter, HTTPException, UploadFile, File
 from fastapi import Request
 from bd_law_multi_agent.services.mistral_ocr import  MistralOCRTextExtractor
+from bd_law_multi_agent.utils.logger import logger
 
 
 
 router = APIRouter()
-logger = logging.getLogger(__name__)
+
 
 @router.post("/argument_generation", summary="argument generation", response_model=ArgumentResponse)
 async def generate_argument(

@@ -18,7 +18,6 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Initialize session state
 if 'token' not in st.session_state:
     st.session_state.token = None
 if 'user' not in st.session_state:

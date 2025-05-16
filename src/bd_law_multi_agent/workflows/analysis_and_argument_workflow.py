@@ -216,7 +216,8 @@
 
 
 
-from bd_law_multi_agent.core.common import logger
+from bd_law_multi_agent.utils.logger import logger
+
 from bd_law_multi_agent.core.config import config
 from langchain.callbacks.manager import tracing_v2_enabled
 from langgraph.graph import StateGraph, END

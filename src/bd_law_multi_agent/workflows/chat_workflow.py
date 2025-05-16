@@ -1,6 +1,7 @@
 from bd_law_multi_agent.core.config import config
 from langgraph.graph import StateGraph, END
-from bd_law_multi_agent.core.common import logger
+from bd_law_multi_agent.utils.logger import logger
+
 from typing import Dict, List, Any, Optional, TypedDict
 from bd_law_multi_agent.services.rag_service import PersistentLegalRAG
 from bd_law_multi_agent.prompts.lega_chat_prompy import LegalChatbotPrompts
@@ -24,36 +25,25 @@ class ChatState(TypedDict, total=False):
     query_type: str
     error: Optional[str]
 
-# Node Definitions returning state updates
+
 def retrieve_chat_context(state: ChatState) -> ChatState:
     """Retrieve relevant documents for the chat query"""
     logger.info("Retrieving context for chat query...")
     
-    # Get doc type based on query content
-    doc_type = "General"
     query = state["query"]
     
-    if any(term in query.lower() for term in ["define", "what is", "meaning of"]):
-        doc_type = "Dictionary"
-    elif any(term in query.lower() for term in ["case law", "precedent"]):
-        doc_type = "CaseLaw"  
-    elif any(term in query.lower() for term in ["section", "article"]):
-        doc_type = "Legislation"
-    
     try:
-        # Retrieve relevant documents
+        
         documents = rag_system.vector_store.similarity_search(
             query, 
             k=config.MAX_RETRIEVED_DOCS,
-            filter={"document_type": doc_type} if doc_type != "General" else None,
-            similarity_threshold=0.65
+            similarity_threshold=0.65  
         )
         
-        # Return updated state
         return {
             "documents": documents, 
-            "current_step": "retrieved_context", 
-            "doc_type": doc_type
+            "current_step": "retrieved_context",
+            "doc_type": "General" 
         }
     except Exception as e:
         logger.error(f"Error retrieving documents: {e}")
@@ -62,7 +52,6 @@ def retrieve_chat_context(state: ChatState) -> ChatState:
             "current_step": "error",
             "error": str(e)
         }
-
 def determine_query_type(state: ChatState) -> ChatState:
     """Determine the type of query to route appropriately"""
     logger.info("Determining query type...")
@@ -182,6 +171,7 @@ def extract_sources(state: ChatState) -> ChatState:
         })
     
     return {"sources": sources, "current_step": "extracted_sources"}
+    
 
 def update_chat_history(state: ChatState) -> ChatState:
     """Update the conversation history with the new exchange"""

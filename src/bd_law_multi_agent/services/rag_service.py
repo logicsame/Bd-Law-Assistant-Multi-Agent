@@ -6,7 +6,8 @@ from typing import List, Dict, Any, Optional
 import os
 from datetime import datetime
 
-from bd_law_multi_agent.core.common import logger
+from bd_law_multi_agent.utils.logger import logger
+
 from bd_law_multi_agent.core.config import config
 from bd_law_multi_agent.services.legal_service import LegalAnalyzer
 from bd_law_multi_agent.prompts.case_analysis_prompt import CASE_ANALYSIS_PROMPT

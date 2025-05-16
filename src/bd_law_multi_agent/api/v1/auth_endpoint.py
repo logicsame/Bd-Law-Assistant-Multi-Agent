@@ -13,7 +13,8 @@ from bd_law_multi_agent.schemas.schemas import User, UserCreate, Token
 from bd_law_multi_agent.services.user_services import authenticate_user, create_user, get_user_by_email
 from bd_law_multi_agent.models.document_model import UserHistory
 from bd_law_multi_agent.database.database import get_analysis_db
-from bd_law_multi_agent.core.common import logger
+from bd_law_multi_agent.utils.logger import logger
+
 router = APIRouter(tags=["authentication"])
 
 
